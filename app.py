@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import sqlite3
 from datetime import datetime
 
@@ -27,17 +27,7 @@ def init_db():
 @app.route('/')
 def home():
     """ホームページ"""
-    return jsonify({
-        "message": "メモ管理APIへようこそ",
-        "endpoints": {
-            "memos": "GET /memos",
-            "create": "POST /memos",
-            "detail": "GET /memos/<id>",
-            "update": "PUT /memos<id>",
-            "delete": "DELETE /memos/<id>"
-        }
-    })
-
+    return render_template('index.html')
 
 @app.route('/memos', methods=['POST'])
 def create_memo():
@@ -74,11 +64,29 @@ def create_memo():
 
 @app.route('/memos', methods=['GET'])
 def get_memos():
-    """メモ一覧を取得"""
+    """メモ一覧を取得（検索・フィルタリング対応）"""
+    # クエリパラメータを取得
+    search = request.args.get('search', '')
+    tag = request.args.get('tag', '')
+
     conn = sqlite3.connect('memos.db')
     cursor = conn.cursor()
 
-    cursor.execute('SELECT id, title, content, tags, created_at, updated_at FROM memos ORDER BY created_at DESC')
+    query = 'SELECT id, title, content, tags, created_at, updated_at FROM memos WHERE 1=1'
+    params = []
+
+    # 検索条件を追加
+    if search:
+        query += ' AND (title LIKE ? OR content LIKE ?)'
+        params.extend([f'%{search}%', f'%{search}%'])
+
+    if tag:
+        query += ' AND tags LIKE ?'
+        params.append(f'%{tag}%')
+
+    query += ' ORDER BY created_at DESC'
+
+    cursor.execute(query, params)
     rows = cursor.fetchall()
     conn.close()
 
