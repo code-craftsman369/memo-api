@@ -1,15 +1,15 @@
 # Memo API
 
-FlaskとSQLiteを使ったシンプルなメモ管理API
+FlaskとSQLiteを使った実用的なメモ管理アプリ
 
 ## 🌟 機能
 
-- ✅ メモの作成
-- ✅ メモ一覧取得
-- ✅ 個別メモ取得
-- ✅ メモ更新
-- ✅ メモ削除
-- ✅ タグ機能
+- ✅ メモの作成・読取・更新・削除（CRUD）
+- ✅ **タイトル・内容での検索機能**
+- ✅ **タグでのフィルタリング**
+- ✅ **美しいHTMLフロントエンド**
+- ✅ タグ機能（カンマ区切り）
+- ✅ 自動タイムスタンプ
 - ✅ SQLiteデータベースで永続化
 
 ## 🛠 技術スタック
@@ -17,6 +17,7 @@ FlaskとSQLiteを使ったシンプルなメモ管理API
 - **Python** 3.11
 - **Flask** - Webフレームワーク
 - **SQLite** - データベース
+- **HTML/CSS/JavaScript** - フロントエンド
 
 ## 📦 インストール
 
@@ -40,26 +41,37 @@ python app.py
 
 サーバーが `http://localhost:5004` で起動します。
 
+### ブラウザでアクセス
+```
+http://localhost:5004/
+```
+
+綺麗なWebインターフェースが表示されます！
+
+## 🎨 Webインターフェース
+
+### 特徴
+
+- グラデーション背景
+- リアルタイム検索
+- タグフィルタリング
+- レスポンシブデザイン
+
+### 使い方
+
+1. **検索窓**にキーワードを入力（タイトル・内容から検索）
+2. **タグ入力窓**にタグを入力（タグで絞り込み）
+3. **🔍 検索ボタン**をクリック
+4. **📋 全て表示ボタン**で全メモを表示
+
 ## 📝 API エンドポイント
 
-### 1. ホームページ
+### 1. ホームページ（HTML）
 ```bash
 GET /
 ```
 
-**レスポンス例**：
-```json
-{
-  "message": "メモ管理APIへようこそ",
-  "endpoints": {
-    "memos": "GET /memos",
-    "create": "POST /memos",
-    "detail": "GET /memos/<id>",
-    "update": "PUT /memos/<id>",
-    "delete": "DELETE /memos/<id>"
-  }
-}
-```
+Webインターフェースを表示
 
 ---
 
@@ -95,10 +107,14 @@ curl -X POST http://localhost:5004/memos \
 
 ---
 
-### 3. メモ一覧を取得
+### 3. メモ一覧を取得（検索・フィルタリング対応）
 ```bash
-GET /memos
+GET /memos?search={keyword}&tag={tag}
 ```
+
+**クエリパラメータ**：
+- `search`: タイトルまたは内容で検索
+- `tag`: タグで絞り込み
 
 **レスポンス例**：
 ```json
@@ -119,7 +135,17 @@ GET /memos
 
 **curlでの実行例**：
 ```bash
+# 全メモを取得
 curl http://localhost:5004/memos
+
+# タイトル・内容で検索
+curl "http://localhost:5004/memos?search=買い物"
+
+# タグで絞り込み
+curl "http://localhost:5004/memos?tag=仕事"
+
+# 検索とタグを組み合わせ
+curl "http://localhost:5004/memos?search=会議&tag=重要"
 ```
 
 ---
@@ -196,25 +222,40 @@ curl -X DELETE http://localhost:5004/memos/1
 
 ## 💡 使用例
 
-### シナリオ：買い物メモを管理
+### シナリオ1：Webインターフェースで管理
+
+1. ブラウザで `http://localhost:5004/` を開く
+2. メモが一覧表示される
+3. 検索窓に「買い物」と入力して検索
+4. 買い物関連のメモだけが表示される
+
+---
+
+### シナリオ2：タグで整理
 ```bash
-# 1. メモを作成
+# 仕事メモを作成
 curl -X POST http://localhost:5004/memos \
   -H "Content-Type: application/json" \
-  -d '{"title": "買い物リスト", "content": "牛乳、卵、パン", "tags": "買い物"}'
+  -d '{"title": "会議メモ", "content": "プロジェクトの進捗", "tags": "仕事,重要"}'
 
-# レスポンス: {"id": 1, ...}
-
-# 2. メモ一覧を確認
-curl http://localhost:5004/memos
-
-# 3. メモを更新（チーズを追加）
-curl -X PUT http://localhost:5004/memos/1 \
+# プライベートメモを作成
+curl -X POST http://localhost:5004/memos \
   -H "Content-Type: application/json" \
-  -d '{"content": "牛乳、卵、パン、チーズ"}'
+  -d '{"title": "旅行プラン", "content": "京都旅行", "tags": "プライベート,旅行"}'
 
-# 4. 買い物が終わったので削除
-curl -X DELETE http://localhost:5004/memos/1
+# 仕事のメモだけ表示
+curl "http://localhost:5004/memos?tag=仕事"
+```
+
+---
+
+### シナリオ3：検索機能
+```bash
+# 「会議」を含むメモを検索
+curl "http://localhost:5004/memos?search=会議"
+
+# 「重要」タグで絞り込み
+curl "http://localhost:5004/memos?tag=重要"
 ```
 
 ## 🗄️ データベース構造
@@ -234,6 +275,8 @@ curl -X DELETE http://localhost:5004/memos/1
 ```
 memo-api/
 ├── app.py                 # メインアプリケーション
+├── templates/
+│   └── index.html        # Webインターフェース
 ├── memos.db              # SQLiteデータベース（自動生成）
 ├── .gitignore
 └── README.md
@@ -246,21 +289,49 @@ memo-api/
 - FlaskでのCRUD API実装
 - SQLiteデータベース操作（INSERT, SELECT, UPDATE, DELETE）
 - REST APIの設計原則
+- **検索機能の実装（LIKE句）**
+- **クエリパラメータの処理**
+- **動的SQL構築**
+- HTMLフロントエンドとAPIの連携
+- JavaScriptでのfetch API使用
+- レスポンシブデザイン
 - エラーハンドリング
-- タプルの正しい使い方（カンマの重要性）
-- データベーストランザクション
-- レスポンスステータスコード（200, 201, 404, 400）
+- タプルの正しい使い方
 
-## 🔜 今後の改善予定（Day 22-23）
+## ⚙️ 検索機能の仕組み
 
-- [ ] 検索機能（タイトル・内容での検索）
-- [ ] タグでのフィルタリング
+### タイトル・内容検索
+```sql
+SELECT * FROM memos 
+WHERE title LIKE '%キーワード%' 
+   OR content LIKE '%キーワード%'
+```
+
+### タグ検索
+```sql
+SELECT * FROM memos 
+WHERE tags LIKE '%タグ%'
+```
+
+### 組み合わせ検索
+```sql
+SELECT * FROM memos 
+WHERE (title LIKE '%キーワード%' OR content LIKE '%キーワード%')
+  AND tags LIKE '%タグ%'
+```
+
+## 🔜 今後の改善予定
+
 - [ ] 日付範囲でのフィルタリング
-- [ ] ページネーション
-- [ ] ソート機能
-- [ ] HTMLフロントエンド
+- [ ] ページネーション（大量のメモ対応）
+- [ ] ソート機能（日付順、タイトル順）
+- [ ] メモの編集機能（Webインターフェース）
+- [ ] メモの削除機能（Webインターフェース）
+- [ ] メモ作成機能（Webインターフェース）
 - [ ] ユーザー認証
 - [ ] 画像添付機能
+- [ ] マークダウン対応
+- [ ] エクスポート機能（CSV、JSON）
 
 ## ⚠️ 注意事項
 
@@ -268,6 +339,8 @@ memo-api/
 - 本番環境で使用する場合は、以下の対策を追加してください：
   - ユーザー認証
   - 入力バリデーション強化
+  - XSS対策
+  - SQLインジェクション対策（現在はプレースホルダーで対応済み）
   - セキュリティヘッダー
   - HTTPS対応
 
