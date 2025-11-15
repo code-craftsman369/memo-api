@@ -1,5 +1,7 @@
 # Memo API
 
+![Memo API Screenshot](images/screenshot.png)
+
 FlaskとSQLiteを使った実用的なメモ管理アプリ
 
 ## 🌟 機能
